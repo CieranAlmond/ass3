@@ -266,7 +266,17 @@ cleanup:
 workflows:
   default:
     jobs:
-      - build-frontend
+      build-frontend:
+      executor: node
+      steps:
+        - checkout
+        - attach_workspace:
+            at: .
+        - run:
+            name: npm run build
+            working_directory: ./frontend
+            command: npm run build
+
       - build-backend
       - test-frontend:
           requires: [build-frontend]
@@ -295,3 +305,6 @@ workflows:
           requires: [smoke-test]
       - cleanup:
           requires: [cloudfront-update]
+
+
+
