@@ -43,7 +43,7 @@ jobs:
       - run:
           name: Build front-end
           command: |
-            # Your code here
+            ls -la && npm install
             exit 1
       - save_cache:
           paths: [frontend/node_modules]
@@ -266,18 +266,11 @@ cleanup:
 workflows:
   default:
     jobs:
-      build-frontend:
-      executor: node
-      steps:
-        - checkout
-        - attach_workspace:
-            at: .
-        - run:
-            name: npm run build
-            working_directory: ./frontend
-            command: npm run build
-
+      - build-front-end
       - build-backend
+
+
+
       - test-frontend:
           requires: [build-frontend]
       - test-backend:
