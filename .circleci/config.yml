@@ -152,6 +152,9 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update ansible
+            apk add tar
+            apk add gzip
+            pip install awscli
             ansible --version
       - run:
           name: Configure server
@@ -173,7 +176,7 @@ jobs:
             cd backend
             npm install
             touch migrations.txt
-            npm run migrations > migration.txt
+            npm run migrations >> migration.txt
             cat migration.txt
       - run:
           name: Send migration results to memstash
