@@ -128,12 +128,12 @@ jobs:
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
             --output text >> .circleci/ansible/inventory.txt
-          cat .circleci/ansible/inventory.txt
+            cat .circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      - destroy-environment
+      #- destroy-environment
       # Here's where you will add some code to rollback on failure    
     
   configure-infrastructure:
