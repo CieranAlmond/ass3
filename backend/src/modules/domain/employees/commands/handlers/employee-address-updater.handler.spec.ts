@@ -33,7 +33,7 @@ describe('Employee Address Updater', () => {
       await handler.handle(updateEmployee);
 
       // Assert
-      expect(employeeRepository.findById).toBeCalledWith(100);
+      expect(employeeRepository.findById).toBeCalledWith(101);
       expect(employeeRepository.save).toBeCalled();
     });
   });
