@@ -1,7 +1,4 @@
-version: 2.1
-
-
-            
+version: 2.1           
 jobs:
   build-frontend:
     docker:
@@ -14,7 +11,6 @@ jobs:
           name: Build front-end
           command: |
             cd frontend
-            npm install webpack-dev-server -g
             npm install
             npm run build
       - save_cache:
@@ -38,14 +34,11 @@ jobs:
           paths: [backend/node_modules]
           key: backend-build
 
-  
-            
-
-workflows:
-  default:
-    jobs:
-      - build-front-end
-      - build-backend
+  workflows:
+    default:
+      jobs:
+        - build-front-end
+        - build-backend
 
 
 
