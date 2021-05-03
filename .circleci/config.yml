@@ -75,10 +75,23 @@ jobs:
           name: Font-end security scan
           command: |
             cd frontend
-            npm i
+            npm install
             npm audit --audit-level=critical
 
-
+  scan-backend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: ["backend-build"]
+      - run:
+          name: Back-end security scan
+          command: |
+            cd backemd
+            npm install
+            npm audit --audit-level=critical
+            
 workflows:
   default:
     jobs:
@@ -90,6 +103,8 @@ workflows:
           requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
+      - scan-backend:
+          requires: [build-backend]
       
 
 
