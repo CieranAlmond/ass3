@@ -185,18 +185,20 @@ jobs:
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
             npm install
-            touch migrations.txt
-            npm run migrations >> migration.txt
-            cat migration.txt
+            touch migrations_log.txt
+            npm run migrations >> migrations_log.txt
+            cat migrations_log.txt
       - run:
           name: Send migration results to memstash
           command: |
             cd backend
-            echo "CIRCLE_WORKFLOW_ID: ${CIRCLE_WORKFLOW_ID}"
-            if grep -q "has been executed successfully" backend/migration.txt;
-            then
-              curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}; \
+             if grep -q "has been executed successfully" migrations.txt; then 
+              curl -H "Content-Type: text/plain" -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+            else
+              curl -H "Content-Type: text/plain" -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
             fi
+            SUCCESS=$(curl -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID})
+            echo "${SUCCESS}" 
       
      # Here's where you will add some code to rollback on failure  
 
