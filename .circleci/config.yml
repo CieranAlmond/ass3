@@ -169,31 +169,36 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-        at: ~/
+          at: ~/
       - run:
           name: Run migrations
           command: |
-            echo printenv
-            printenv >> ./backend/.env
             cd backend
-            npm run migrations > migrationOutput.txt
-            cat migrationOutput.txt
+            echo ENVIROMENT=$ENVIROMENT > ".env"
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ".env"
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ".env"
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> ".env"
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> ".env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> ".env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> ".env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
+            npm install
+            touch migrations_log.txt
+            npm run migrations >> migrations_log.txt
+            cat migrations_log.txt
       - run:
           name: Send migration results to memstash
           command: |
             cd backend
-            echo grep -c "No migrations are pending" migrationOutput.txt
-            MIGRATION_RESULT=`grep -c "No migrations are pending" migrationOutput.txt`
-            echo $MIGRATION_RESULT
-            curl -H "Content-Type: text/plain" \
-               -H "token: ${CIRCLE_WORKFLOW_ID}" \
-               --request PUT \
-               --data ${MIGRATION_RESULT} \
-               https://api.memstash.io/values/udacity
-            TEST_RESPONSE=$(curl -H "token: ${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/udacity)
-            echo "test memstash result"
-            echo ${TEST_RESPONSE}
-      
+             if grep -q "has been executed successfully" migrations.txt; then 
+              curl -H "Content-Type: text/plain" -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+            else
+              curl -H "Content-Type: text/plain" -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+            fi
+            SUCCESS=$(curl -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID})
+            echo "${SUCCESS}" 
       
      # Here's where you will add some code to rollback on failure  
 
