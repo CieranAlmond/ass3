@@ -228,6 +228,30 @@ jobs:
      # Here's where you will add some code to rollback on failure  
       # rebooted rds server in cloud
 
+  deploy-backend:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      # Checkout code from git
+      - checkout
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints: ["10:bf:fc:de:65:77:9c:2e:cb:12:36:db:4e:6f:8c:da"]
+      # attach workspace
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible openssh-client tar gzip 
+      - run:
+          name: Deploy backend
+          working_directory: ./.circleci/ansible
+          command: |
+            cat inventory
+            ansible-playbook -i inventory deploy-server.yaml -vv
+      # Here's where you will add some code to rollback on failure  
+
 workflows:
   default:
     jobs:
@@ -249,6 +273,8 @@ workflows:
       - run-migrations:
           requires: [configure-infrastructure]
       - deploy-frontend:
+          requires: [run-migrations]
+      - deploy-backend:
           requires: [run-migrations]
           
       
