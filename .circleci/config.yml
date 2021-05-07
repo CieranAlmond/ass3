@@ -221,6 +221,7 @@ jobs:
       - run:
           name: Deploy frontend objects
           command: |
+            cd frontend
             aws s3 cp ./frontend/dist s3://udapeople-${CIRCLE_WORKFLOW_ID}/ --recursive
       
       # Here's where you will add some code to rollback on failure     
@@ -246,9 +247,9 @@ jobs:
       - run:
           name: Deploy backend
           command: |
-            cd backend
+            cd .circleci/ansible
             cat inventory
-            ansible-playbook -i inventory deploy-server.yaml -vv
+            ansible-playbook -i inventory.txt deploy-backend.yml
       # Here's where you will add some code to rollback on failure  
 
 workflows:
