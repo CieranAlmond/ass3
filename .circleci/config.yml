@@ -227,7 +227,7 @@ jobs:
       
       # Here's where you will add some code to rollback on failure     
      # Here's where you will add some code to rollback on failure  
-      # rebooted rds server in cloud
+   
 
   deploy-backend:
     docker:
@@ -244,11 +244,15 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update ansible openssh-client tar gzip 
+            apk add ansible
+            apk add curl
+            pip install awscli
+            aws --version
+            ansible --version
       - run:
           name: Deploy backend
-          working_directory: ./.circleci/ansible
           command: |
+            cd .circleci/ansible/
             cat inventory
             ansible-playbook -i inventory.txt deploy-backend.yml
       # Here's where you will add some code to rollback on failure  
