@@ -219,6 +219,15 @@ jobs:
             npm install
             npm run build
       - run:
+          name: Build frontend
+          command: |
+            cd frontend
+            ls -la
+            cat .env
+            npm run build
+      - aws-cli/setup
+      #adding so -aws s3 bucket command can build
+      - run:
           name: Deploy frontend objects
           working_directory: ./frontend
           command: |
