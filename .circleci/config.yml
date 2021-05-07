@@ -195,7 +195,36 @@ jobs:
             if grep "has been executed successfully" backend/migrations_log.txt;
             then curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}; \
             fi
-      
+  
+  deploy-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            cd frontend
+            sudo npm install webpack-dev-server -g
+            sudo npm install
+      - run:
+          name: Get backend url
+          command: |
+            # your code here
+            PUBLIC_IP=`cat .circleci/ansible/inventory.txt | head -2 | tail -1`
+            API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            export="http://${BACKEND_IP}:3030"
+            cd frontend
+            npm install
+            npm run build
+      - run:
+          name: Deploy frontend objects
+          command: |
+            aws s3 cp --recursive frontend/dist "s3://udapeople-<< pipeline.parameters.workflow-id >>"
+      - revert-migrations
+      - destroy-environment  
+      # Here's where you will add some code to rollback on failure     
      # Here's where you will add some code to rollback on failure  
       # rebooted rds server in cloud
 
@@ -219,6 +248,8 @@ workflows:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires: [run-migrations]
           
       
       
