@@ -221,7 +221,7 @@ jobs:
       - run:
           name: Deploy frontend objects
           command: |
-             aws s3 cp ./frontend/dist s3://udapeople-${CIRCLE_WORKFLOW_ID}/ --recursive
+            aws s3 cp ./frontend/dist s3://udapeople-${CIRCLE_WORKFLOW_ID}/ --recursive
       
       # Here's where you will add some code to rollback on failure     
      # Here's where you will add some code to rollback on failure  
@@ -245,8 +245,8 @@ jobs:
             apk add --update ansible openssh-client tar gzip 
       - run:
           name: Deploy backend
-          working_directory: ./.circleci/ansible
           command: |
+            cd backend
             cat inventory
             ansible-playbook -i inventory deploy-server.yaml -vv
       # Here's where you will add some code to rollback on failure  
