@@ -313,7 +313,6 @@ jobs:
       - image: python:3.7-alpine3.11 
     steps:
       - checkout
-       Checkout code from git
       - attach_workspace:
           at: ~/
       - run:
