@@ -343,7 +343,7 @@ jobs:
           name: Frontend smoke test.
           command: |
             URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com"
-            if curl -s ${URL} 
+            if curl -s ${URL} | grep "root"
             then
               return 1
             else
