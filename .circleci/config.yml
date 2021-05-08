@@ -275,8 +275,8 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com/"
-            if curl -s ${URL} | grep "Welcome"
+            BACKEND=`cat .circleci/ansible/inventory.txt | head -2 | tail -1`
+            if curl -s ${BACKEND} | grep "Welcome"
             then
               return 1
             else
@@ -285,11 +285,22 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
-            # your code here
+            if curl -s https://${BACKEND}:3030/api/status
+            then
+              return 1
+            else
+              return 0
+            fi
       - run:
           name: Frontend smoke test.
           command: |
-            # your code here
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com"
+            if curl -s ${URL} | grep "Welcome"
+            then
+              return 1
+            else
+              return 0
+            fi
       # Here's where you will add some code to rollback on failure  
 
 workflows:
