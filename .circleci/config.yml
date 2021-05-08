@@ -192,9 +192,9 @@ jobs:
       - run:
           name: Send migration results to memstash
           command: |
-            echo "CIRCLE_WORKFLOW_ID: ${CIRCLE_WORKFLOW_ID}"
+            echo "CIRCLE_WORKFLOW_ID: ${CIRCLE_WORKFLOW_ID:0:7}"
             if grep "has been executed successfully" backend/migrations_log.txt;
-            then curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}; \
+            then curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}; \
             fi
   
   deploy-frontend:
@@ -224,7 +224,7 @@ jobs:
       - run:
           name: Deploy frontend objects
           command: |
-            aws s3 cp ./frontend/dist s3://udapeople-${CIRCLE_WORKFLOW_ID} --recursive
+            aws s3 cp ./frontend/dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       
       # Here's where you will add some code to rollback on failure     
      # Here's where you will add some code to rollback on failure  
