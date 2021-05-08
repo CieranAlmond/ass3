@@ -342,7 +342,7 @@ jobs:
       - run:
           name: Frontend smoke test.
           command: |
-            pass
+            exit 1
       - destroy-environment:
           when: on_fail
       - revert-migrations:
