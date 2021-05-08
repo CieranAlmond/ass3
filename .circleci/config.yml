@@ -308,53 +308,77 @@ jobs:
       # Here's where you will add some code to rollback on failure  
 
 
-  smoke-test:
+  #smoke-test:
+    #docker:
+      #- image: python:3.7-alpine3.11 
+    #steps:
+      #- checkout
+      # Checkout code from git
+      #- attach_workspace:
+          #at: ~/
+      #- run:
+          #name: Install dependencies
+          #command: |
+            #apk add --update curl
+            #pip install awscli
+      #- run:
+          #name: Get backend url
+          #command: |
+            #BACKEND=`cat .circleci/ansible/inventory.txt | head -2 | tail -1`
+            #if curl -s ${BACKEND} | grep "Welcome"
+            #then
+              #return 1
+            #else
+              #return 0
+            #fi
+      #- run:
+          #name: Backend smoke test.
+          #command: |
+            #if curl -s https://${BACKEND}:3030/api/status
+            #then
+              #return 1
+            #else
+              #return 0
+            #fi
+      #- run:
+          #name: Frontend smoke test.
+          #command: |
+            #URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com"
+            #if curl -s ${URL} | grep "Welcome"
+            #then
+              #return 1
+            #else
+              #return 0
+            #fi
+      #- destroy-environment:
+          #when: on_fail
+      #- revert-migrations:
+          #when: on_fail 
+      # Here's where you will add some code to rollback on failure  
+
+  cloudfront-update:
     docker:
-      - image: python:3.7-alpine3.11 
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
-      # Checkout code from git
-      - attach_workspace:
-          at: ~/
       - run:
           name: Install dependencies
           command: |
-            apk add --update curl
-            pip install awscli
+            yum install -y tar gzip curl
+            curl -sL https://rpm.nodesource.com/setup_10.x | bash -
+            yum install -y nodejs
       - run:
-          name: Get backend url
+          name: Update cloudfront distribution
           command: |
-            BACKEND=`cat .circleci/ansible/inventory.txt | head -2 | tail -1`
-            if curl -s ${BACKEND} | grep "Welcome"
-            then
-              return 1
-            else
-              return 0
-            fi
-      - run:
-          name: Backend smoke test.
-          command: |
-            if curl -s https://${BACKEND}:3030/api/status
-            then
-              return 1
-            else
-              return 0
-            fi
-      - run:
-          name: Frontend smoke test.
-          command: |
-            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com"
-            if curl -s ${URL} | grep "Welcome"
-            then
-              return 1
-            else
-              return 0
-            fi
-      - destroy-environment:
-          when: on_fail
-      - revert-migrations:
-          when: on_fail 
+            cd ./.circleci/files
+            aws cloudformation deploy \
+              --template-file cloudfront.yaml \
+              --stack-name udapeople-cloudfront-production \
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople
       # Here's where you will add some code to rollback on failure  
+      - revert-migrations:
+          when: on_fail  
 
 workflows:
   default:
@@ -380,8 +404,8 @@ workflows:
           requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
-      - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+      #- smoke-test:
+          #requires: [deploy-backend, deploy-frontend]
           
       
       
