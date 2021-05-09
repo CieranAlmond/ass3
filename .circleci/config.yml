@@ -351,9 +351,9 @@ jobs:
             #URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-2.amazonaws.com"
             if curl -s "http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-2.amazonaws.com/#/index.html" | grep -o "Welcome"
             then
-              return 0
+              echo ${URL}
             else
-              return 0
+              echo ${URL}
             fi
       - destroy-environment:
           when: on_fail
