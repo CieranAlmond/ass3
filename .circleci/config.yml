@@ -163,16 +163,16 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            echo "[web]" > .circleci/ansible/inventory.txt
-            aws ec2 describe-instances \
-            --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-            --output text >> .circleci/ansible/inventory.txt
-            cat .circleci/ansible/inventory.txt
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/ansible/inventory.txt
+            INSTANCE_IP=$(aws ec2 describe-instances \
+            --filters 'Name=tag:Name,Values=backend-*' \
+            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --output text)
+            echo ${INSTANCE_IP}
+            curl -H "Content-Type: text/plain" \
+               -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" \
+               --request PUT \
+               --data ${INSTANCE_IP} \
+               https://api.memstash.io/values/instance_ip
       - destroy-environment:
           when: on_fail
       #- destroy-environment
@@ -201,8 +201,14 @@ jobs:
       - run:
           name: Configure server
           command: |
-            cd .circleci/ansible
-            ansible-playbook -i inventory.txt configure-server.yml
+            INSTANCE_IP=$(curl -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request GET https://api.memstash.io/values/instance_ip)
+            echo ${INSTANCE_IP}
+            cd .circleci/ansible/
+            ls
+            echo ${INSTANCE_IP} >> ./inventory.txt
+            cat ./inventory.txt
+            export ANSIBLE_HOST_KEY_CHECKING=False
+            ansible-playbook -i ./inventory.txt configure-server.yml
       # Here's where you will add some code to rollback on failure
 
   run-migrations:
@@ -253,11 +259,9 @@ jobs:
           name: Get backend url
           command: |
             # your code here
-            PUBLIC_IP=`cat .circleci/ansible/inventory.txt | head -2 | tail -1`
-            API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
-            export="http://${BACKEND_IP}:3030"
-            echo "${API_URL}" >> "frontend/.env"
+            PUBLIC_IP=$(curl -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request GET https://api.memstash.io/values/instance_ip)
+            echo $PUBLIC_IP
+            export API_URL="http://$PUBLIC_IP:3030"
             cd frontend
             npm install
             npm run build
@@ -296,6 +300,14 @@ jobs:
             aws --version
             ansible --version
       - run:
+          name: add IP to ansinle
+          command: |
+            INSTANCE_IP=$(curl -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request GET https://api.memstash.io/values/instance_ip)
+            echo ${INSTANCE_IP}
+            cd .circleci/ansible/
+            echo ${INSTANCE_IP} >> ./inventory.txt
+            cat ./inventory.txt
+      - run:
           name: Deploy backend
           command: |
             cd .circleci/ansible/
@@ -323,11 +335,11 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            export BACKEND=$(sed -n 2p .circleci/ansible/inventory.txt)
+           IP=$(curl -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request GET https://api.memstash.io/values/instance_ip)
       - run:
           name: Backend smoke test.
           command: |
-            if curl -s https://${BACKEND}:3030/api/status
+            if curl -s https://${IP}:3030/api/status | grep "ok"
             then
               return 1
             else
@@ -336,8 +348,8 @@ jobs:
       - run:
           name: Frontend smoke test.
           command: |
-            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-2.amazonaws.com/"
-            if curl -s ${URL} | grep "Welcome"
+            #URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-2.amazonaws.com"
+            if curl -s "http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-2.amazonaws.com/#/index.html" | grep -o "Welcome"
             then
               return 1
             else
