@@ -375,19 +375,18 @@ jobs:
             apk add --update curl
       - run:
           name: Update cloudfront distribution
-          working_directory: ./.circleci/files
           command: |
             
             OldWorkflowId=$(aws cloudformation list-exports --query "Exports[?Name=='WorkflowID'].Value" --output text)
             STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" --stack-status-filter CREATE_COMPLETE --output text)
             echo OldWorkflowId: ${OldWorkflowId}
-            echo NewWorkflowId: ${CIRCLE_WORKFLOW_ID}
+            echo NewWorkflowId: ${CIRCLE_WORKFLOW_ID:0:7}
             echo STACKS: ${STACKS}
             echo Update CloudFront
 
             
             aws cloudformation deploy \
-              --template-file cloudfront.yaml \
+              --template-file .circleci/files/cloudfront.yml \
               --stack-name udapeople-cloudfront-production \
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople
