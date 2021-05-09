@@ -370,6 +370,7 @@ jobs:
       - checkout
       - run:
           name: Update cloudfront distribution
+          working_directory: ./.circleci/files
           command: |
             
             OldWorkflowId=$(aws cloudformation list-exports --query "Exports[?Name=='WorkflowID'].Value" --output text)
@@ -379,7 +380,7 @@ jobs:
             echo STACKS: ${STACKS}
             echo Update CloudFront
 
-            cd .circleci/files/
+            
             aws cloudformation deploy \
               --template-file cloudfront.yaml \
               --stack-name udapeople-cloudfront-production \
