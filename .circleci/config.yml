@@ -385,7 +385,7 @@ jobs:
               --tags project=udapeople
 
             echo Delete old stacks/resources
-            if [ -n "${OldWorkflowId}" ]
+            if [ -n "${OldWorkflowId}" && [[ "${STACKS[@]}" =~ "${OldWorkflowId}" ]]
             then
               # Delete files from bucket
               aws s3 rm s3://udapeople-${OldWorkflowId}/ --recursive
