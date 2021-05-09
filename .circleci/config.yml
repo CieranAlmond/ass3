@@ -323,13 +323,7 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            BACKEND=`cat .circleci/ansible/inventory.txt | head -2 | tail -1`
-            if curl -s ${BACKEND}
-            then
-              return 1
-            else
-              return 0
-            fi
+            export BACKEND=$(sed -n 2p .circleci/ansible/inventory.txt)
       - run:
           name: Backend smoke test.
           command: |
