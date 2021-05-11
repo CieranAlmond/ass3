@@ -14,15 +14,18 @@
     autoremove: yes
 
 - name: install node
+  become: yes
   shell: |
     curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash - && sudo apt-get install -y nodejs
 - name: "Install zip utility."
+  become: yes
   apt:
     name: [ "zip", "unzip" ]
     state: latest
     update_cache: yes
 
 - name: "install pm2"
+  become: yes
   npm:
     name: pm2
     global: yes
