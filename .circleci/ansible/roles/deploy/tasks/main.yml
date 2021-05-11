@@ -17,11 +17,11 @@
     production: yes
     state: present
 
-- name: "copy to destination"
-  copy:
-    src: /root/project/backend
-    dest: /home/ubuntu
-
+#- name: "copy to destination"
+ # copy:
+  #  src: /root/project/backend
+   # dest: /home/ubuntu
+#
 - name: "install dependencies"
   shell: |
     cd /home/ubuntu/backend
