@@ -14,6 +14,24 @@
     name: ["nodejs", "npm"]
     update_cache: yes
 
+- name: Creates directory
+  file:
+    path: /home/ubuntu/backend
+    state: directory
+
+- name: "Get project/backend files from circleci server to local"
+  become: true
+  copy:
+    src: /root/project/backend
+    dest: /home/ubuntu
+
+- name: make sure the latest npm is installed
+  become: true
+  command: npm install -g n
+  args:
+    chdir: /home/ubuntu/backend
+
+
 - name: "install pm2"
   become: true
   npm:
@@ -22,21 +40,38 @@
     production: yes
     state: present
 
-- name: "Get project/backend files from circleci server to local"
+- name: " update dependencies"
   become: true
-  copy:
-    src: ~/project/backend/
-    dest: /home/ubuntu
-
-- name: make sure the latest npm is installed
-  become: true
-  command: npm install -g npm
+  shell: |
+    cd /home/ubuntu/backend
+    curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+    apt-get install -y nodejs  
+    npm install -g n
+    npm install
 
 - name: "build package"
-  shell: |
-    cd /home/ubuntu/backend
-    npm run build
-- name: "use pm2 to run the node server"
-  shell: |
-    cd /home/ubuntu/backend
-    pm2 start npm --name backend -- start
+  become: true
+  command: npm run build
+  args:
+    chdir: /home/ubuntu/backend
+    
+- name: "Executing node"
+  become: true
+  command: 
+    pm2 start npm --name backend -- run start
+  args:
+    chdir: /home/ubuntu/backend
+
+
+environment:
+    ENVIRONMENT: production
+    NODE_ENV: production
+    TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
+    TYPEORM_MIGRATIONS_DIR: "{{ lookup('env','TYPEORM_MIGRATIONS_DIR') }}"
+    TYPEORM_MIGRATIONS: "{{ lookup('env','TYPEORM_MIGRATIONS') }}"
+    TYPEORM_ENTITIES: "{{ lookup('env','TYPEORM_ENTITIES') }}"
+    TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
+    TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
+    TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
+    TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
+    TYPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}" 
