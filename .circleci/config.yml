@@ -190,7 +190,6 @@ jobs:
           command: |
             apk add --update ansible
             apk add --no-cache curl
-            apk add --no-cache openssh-client
             apk add tar
             apk add gzip
             pip install awscli
@@ -292,9 +291,13 @@ jobs:
           command: |
             apk add ansible
             apk add curl
+            apk add openssh-client
             pip install awscli
             aws --version
             ansible --version
+      - run:
+          name: Install Open SSH
+          command: apk add openssh-client
       - run:
           name: add IP to ansinle
           command: |
