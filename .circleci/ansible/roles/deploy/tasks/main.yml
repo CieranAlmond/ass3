@@ -1,4 +1,3 @@
-
 - name: Upgrade all apt packages
   become: true
   apt:
@@ -72,11 +71,11 @@
   become: true
   command: npm run build
 
- name: "build package"
- shell: |
-   cd /home/ubuntu/backend
-   npm run build
+- name: "build package"
+  shell: |
+    cd /home/ubuntu/backend
+    npm run build
 - name: "use pm2 to run the node server"
   shell: |
-   cd /home/ubuntu/backend
-   pm2 start npm -- run "start:dev"
+    cd /home/ubuntu/backend
+    pm2 start npm -- run "start:dev"
