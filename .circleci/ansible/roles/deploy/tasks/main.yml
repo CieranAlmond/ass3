@@ -53,15 +53,15 @@
   args:
     chdir: /home/ubuntu
 
-- name: "Get project/backend files from circleci server to local"
+- name: Copy backend dist files web server
   become: true
   copy:
-    src: ~/project/backend/dist
-    dest: /home/ubuntu/backend/
+    src: /root/project/backend
+    dest: /home/ubuntu
 
 - name: "cd to backend dir"
   become: true
-  command: cd /home/ubuntu/backend    
+  command: cd /home/ubuntu
 
 - name: "run npm install"
   become: true
@@ -78,4 +78,4 @@
 - name: "use pm2 to run the node server"
   shell: |
     cd /home/ubuntu/backend
-    pm2 start npm -- run "start:dev"
+    pm2 start npm --name backend -- start
