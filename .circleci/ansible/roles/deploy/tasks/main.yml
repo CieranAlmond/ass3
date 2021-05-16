@@ -1,3 +1,9 @@
+
+- name: Upgrade all apt packages
+  become: true
+  apt:
+    name: "*"
+    state: latest
 - name: "upgrade packages."
   become: true
   apt:
@@ -6,75 +12,71 @@
 - name: "install dependencies."
   become: true
   apt:
-    name: ["nodejs", "npm", "tar"]
+    name: ["nodejs", "npm"]
     update_cache: yes
-    
-- name: "install pm2"
-  become: true
-  npm:
-    name: pm2
-    global: yes
-    production: yes
-    state: present
 
-- name: "copy backend file"
+- name: "Get project/backend files from circleci server to local"
   become: true
   copy:
-    src: /home/circleci/project/backend
-    dest: /root/
-    force: no
+    src: ~/project/backend/
+    dest: /home/ubuntu
 
-- name: Copy backend files
+- name: "CD to dir"
   become: true
-  copy:
-    src: /etc/backend.tar.gz
-    dest: /root/backend.tar.gz
+  command: ls
+  args: 
+    chdir: /home/ubuntu/backend
 
-- name: extract files
+- name: "LS backend"
   become: true
-  shell: |    
-    tar xzvf backend.tar.gz --directory /root/    
+  shell: 
+    cmd: ls
 
-- name: "install npm packages"
+- name: make sure the latest npm is installed
+  become: true
+  command: npm install -g npm
+
+- name: "NPM install"
   become: true
   command: npm install
   args:
-    chdir: /root/backend
+    chdir: /home/ubuntu
 
-
-- name: "compile npm packages"
+- name: "NPM Run Build"
   become: true
   command: npm run build
   args:
-    chdir: /root/backend
+    chdir: /home/ubuntu
 
-- name: "start server"
+- name: "LS to verify the dist"
   become: true
-  command: pm2 start npm -- run start
+  command: ls
   args:
-    chdir: /root/backend/dist
+    chdir: /home/ubuntu
 
-- name: "Create directory"
+- name: "Get project/backend files from circleci server to local"
   become: true
-  file:
-    path: ~/udapeople/
-    state: directory
+  copy:
+    src: ~/project/backend/dist
+    dest: /home/ubuntu/backend/
 
-- name: "extract  backend"
+- name: "cd to backend dir"
   become: true
-  unarchive:
-    src: /etc/backend.tar.gz
-    dest: ~/udapeople/
+  command: cd /home/ubuntu/backend    
 
-- name: "install npm to  backend" 
+- name: "run npm install"
   become: true
   command: npm install
-  args:
-    chdir: ~/udapeople/
-   
-
-- name: "run  backend"
+    
+- name: "run npm run build"
   become: true
-  command: pm2 start npm -- run start
-  args:
-    chdir: ~/udapeople/
+  command: npm run build
+
+ name: "build package"
+ shell: |
+   cd /home/ubuntu/backend
+   npm run build
+- name: "use pm2 to run the node server"
+  shell: |
+   cd /home/ubuntu/backend
+   pm2 start npm -- run "start:dev"
