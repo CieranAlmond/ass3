@@ -24,7 +24,7 @@
   become: true
   command: ls
   args: 
-    chdir: /home/ubuntu/backend
+    chdir: /home/ubuntu
 
 - name: "LS backend"
   become: true
