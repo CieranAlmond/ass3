@@ -14,62 +14,23 @@
     name: ["nodejs", "npm"]
     update_cache: yes
 
+- name: "install pm2"
+  become: true
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
 - name: "Get project/backend files from circleci server to local"
   become: true
   copy:
     src: ~/project/backend/
     dest: /home/ubuntu
 
-- name: "CD to dir"
-  become: true
-  command: ls
-  args: 
-    chdir: /home/ubuntu
-
-- name: "LS backend"
-  become: true
-  shell: 
-    cmd: ls
-
 - name: make sure the latest npm is installed
   become: true
   command: npm install -g npm
-
-- name: "NPM install"
-  become: true
-  command: npm install
-  args:
-    chdir: /home/ubuntu
-
-- name: "NPM Run Build"
-  become: true
-  command: npm run build
-  args:
-    chdir: /home/ubuntu
-
-- name: "LS to verify the dist"
-  become: true
-  command: ls
-  args:
-    chdir: /home/ubuntu
-
-- name: Copy backend dist files web server
-  become: true
-  copy:
-    src: /root/project/backend
-    dest: /home/ubuntu
-
-- name: "cd to backend dir"
-  become: true
-  command: cd /home/ubuntu
-
-- name: "run npm install"
-  become: true
-  command: npm install
-    
-- name: "run npm run build"
-  become: true
-  command: npm run build
 
 - name: "build package"
   shell: |
