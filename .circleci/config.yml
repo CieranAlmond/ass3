@@ -291,7 +291,6 @@ jobs:
           command: |
             apk add ansible
             apk add curl
-            apk add openssh-client
             pip install awscli
             aws --version
             ansible --version
