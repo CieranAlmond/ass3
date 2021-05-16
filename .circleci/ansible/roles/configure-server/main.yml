@@ -4,6 +4,7 @@
     upgrade: "yes"
 
 - name: "remove dependencies that are no longer required"
+  become: true
   apt:
     autoremove: yes
 
@@ -15,10 +16,15 @@
     update_cache: yes
 
 - name: "Install zip utility."
+  become: true
   apt:
     name: [ "zip", "unzip" ]
     state: latest
     update_cache: yes
+
+- name: "install nodejs 13.8.0"
+  become: true
+  shell: n 13.8.0
 
 - name: "install pm2 package"
   become: true

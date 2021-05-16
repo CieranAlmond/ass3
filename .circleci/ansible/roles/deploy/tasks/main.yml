@@ -1,52 +1,80 @@
-- name: "Copy backend files"
+- name: "upgrade packages."
+  become: true
+  apt:
+    upgrade: "yes"
+
+- name: "install dependencies."
+  become: true
+  apt:
+    name: ["nodejs", "npm", "tar"]
+    update_cache: yes
+    
+- name: "install pm2"
+  become: true
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
+- name: "copy backend file"
   become: true
   copy:
-    src: /home/backend.tar.gz
-    dest: /home/ubuntu/backend.tar.gz
-    
-- name: "copy backend binaries"
-  become: yes
-  synchronize:
-    src: ../../backend/dist
-    dest: /home/ubuntu/backend
-    recursive: true
+    src: /home/circleci/project/backend
+    dest: /root/
+    force: no
 
-- name: "copy node_modules"
-  become: yes
-  synchronize:
-    src: ../../backend/node_modules
-    dest: /home/ubuntu/backend
-    recursive: true
-    
-- name: "copy packages"
-  become: yes
-  synchronize:
-    src: ../../backend
-    dest: /home/ubuntu/backend
-    recursive: false
-
-- name: "Prepare Env"
-  shell: |
-    sudo npm i
-    npm i pm2 -g
-    sudo npm i npm@latest -g
-    sudo npm i webpack-dev-server -g
-  args:
-    chdir: /home/ubuntu/backend/dist
-    
-- name: "Start PM2"
+- name: Copy backend files
   become: true
-  command: pm2 start main.js --update-env
+  copy:
+    src: /etc/backend.tar.gz
+    dest: /root/backend.tar.gz
+
+- name: extract files
+  become: true
+  shell: |    
+    tar xzvf backend.tar.gz --directory /root/    
+
+- name: "install npm packages"
+  become: true
+  command: npm install
   args:
-    chdir: /home/ubuntu/backend/dist
-  environment:
-    ENVIRONMENT: production
-    TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
-    TYPEORM_MIGRATIONS_DIR: "./migrations"
-    TYPEORM_MIGRATIONS: "./migrations/*.js"
-    TYPEORM_ENTITIES: "./modules/domain/*/entities/*.entity.js"
-    TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
-    TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
-    TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
-    TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
-    TYPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}"
+    chdir: /root/backend
+
+
+- name: "compile npm packages"
+  become: true
+  command: npm run build
+  args:
+    chdir: /root/backend
+
+- name: "start server"
+  become: true
+  command: pm2 start npm -- run start
+  args:
+    chdir: /root/backend/dist
+
+- name: "Create directory"
+  become: true
+  file:
+    path: ~/udapeople/
+    state: directory
+
+- name: "extract  backend"
+  become: true
+  unarchive:
+    src: /etc/backend.tar.gz
+    dest: ~/udapeople/
+
+- name: "install npm to  backend" 
+  become: true
+  command: npm install
+  args:
+    chdir: ~/udapeople/
+   
+
+- name: "run  backend"
+  become: true
+  command: pm2 start npm -- run start
+  args:
+    chdir: ~/udapeople/
