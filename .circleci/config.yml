@@ -384,7 +384,7 @@ jobs:
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople
             echo Delete old stacks
-            if [ -n "${OldWorkflowId}" ]
+            if [[ "$CurrentWorkflowID" != "$OldWorkflowID" ]]
             then
               # Delete files from bucket
               aws s3 rm s3://udapeople-${OldWorkflowId}/ --recursive
