@@ -2,9 +2,11 @@ Public Url to GitHub repository (not private) [URL01]
 https://github.com/CieranAlmond/ass3/
 
 Public URL for your S3 Bucket (aka, your green candidate front-end) [URL02]
-udapeople-prod.cih6j0rav2n8.us-west-2.rds.amazonaws.com
+http://udapeople-prod.udapeople-e74e463.us-west-2.rds.amazonaws.com
 
 Public URL for your CloudFront distribution (aka, your blue production front-end) [URL03]
+
+http://d1ls9fjovr8pvi.cloudfront.net
 
 Public URLs to deployed application back-end in EC2 [URL04]
 
