@@ -1,30 +1,31 @@
-- name: Upgrade all apt packages
+---
+
+- name: "Update apt packages"
   become: true
   apt:
-    name: "*"
-    state: latest
-- name: "upgrade packages."
+    update_cache: "yes"
+    
+- name: "Upgrade apt packages"
   become: true
   apt:
     upgrade: "yes"
-
-- name: "install dependencies."
+    
+- name: "install dependencies"
   become: true
   apt:
     name: ["nodejs", "npm"]
-    update_cache: yes
-
+    update_cache: "yes"
+    
 - name: Creates directory
   file:
     path: /home/ubuntu/backend
     state: directory
-
-- name: "Get project/backend files from circleci server to local"
-  become: true
+   
+- name: Transfer backend files to cloud server
   copy:
     src: /root/project/backend
     dest: /home/ubuntu
-
+    
 - name: make sure the latest npm is installed
   become: true
   command: npm install -g n
@@ -33,13 +34,13 @@
 
 
 - name: "install pm2"
-  become: true
+  become: yes
   npm:
     name: pm2
     global: yes
     production: yes
     state: present
-
+    
 - name: "install typescript"
   become: yes
   npm:
@@ -56,7 +57,6 @@
     apt-get install -y nodejs  
     npm install -g n
     npm install
-
 - name: "build package"
   become: true
   command: npm run build
@@ -82,4 +82,4 @@
     TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
     TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
     TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
-    YPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}" 
+    TYPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}"
