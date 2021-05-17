@@ -1,36 +1,11 @@
-- name: Upgrade all apt packages
+---
+
+- name: "install Ansible dependencies"
   become: true
   apt:
-    name: "*"
+    name: ["nodejs", "npm", "python3", "tar", "gzip", "git"]
     state: latest
-- name: "upgrade packages."
-  become: true
-  apt:
-    upgrade: "yes"
-
-- name: "install dependencies."
-  become: true
-  apt:
-    name: ["nodejs", "npm"]
     update_cache: yes
-
-- name: Creates directory
-  file:
-    path: /home/ubuntu/backend
-    state: directory
-
-- name: "Get project/backend files from circleci server to local"
-  become: true
-  copy:
-    src: /root/project/backend
-    dest: /home/ubuntu/backend
-
-- name: make sure the latest npm is installed
-  become: true
-  command: npm install -g n
-  args:
-    chdir: /home/ubuntu/backend
-
 
 - name: "install pm2"
   become: true
@@ -40,35 +15,27 @@
     production: yes
     state: present
 
-- name: "install typescript"
+- name: "create the application directory"
+  become_user: ubuntu
   become: yes
-  npm:
-    name: typescript
-    global: yes
-    production: yes
-    state: present
+  file:
+    path: ~/app
+    state: directory
 
-- name: " update dependencies"
-  become: true
+- name: "untar the backend app file"
+  become_user: ubuntu
+  become: yes
+  unarchive:
+    src: ~/project/backend.tar
+    dest: ~/app
+
+- name: "start PM2"
+  become_user: ubuntu
+  become: yes
   shell: |
-    cd /home/ubuntu/backend
-    curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-    apt-get install -y nodejs  
-    npm install -g n
-    npm install
-
-- name: "build package"
-  become: true
-  command: npm run build
-  args:
-    chdir: /home/ubuntu/backend
-    
-- name: "Executing node"
-  become: true
-  command: 
-    pm2 start npm --name backend -- run start
-  args:
-    chdir: /home/ubuntu/backend
+    cd ~/app/backend
+    npm i
+    pm2 start npm --name backend -- start
 
 
   environment:
