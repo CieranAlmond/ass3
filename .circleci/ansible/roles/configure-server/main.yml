@@ -33,3 +33,16 @@
     global: yes
     production: yes
     state: present
+
+  environment:
+    ENVIRONMENT: production
+    NODE_ENV: production
+    TYPEORM_CONNECTION: "{{ lookup('env','TYPEORM_CONNECTION') }}"
+    TYPEORM_HOST: "{{ lookup('env','TYPEORM_HOST') }}"
+    TYPEORM_PORT: 5432
+    TYPEORM_USERNAME: "{{ lookup('env','TYPEORM_USERNAME') }}"
+    TYPEORM_PASSWORD: "{{ lookup('env','TYPEORM_PASSWORD') }}"
+    TYPEORM_DATABASE: "{{ lookup('env','TYPEORM_DATABASE') }}"
+    TYPEORM_MIGRATIONS_DIR: ./src/migrations
+    TYPEORM_MIGRATIONS: ./src/migrations/*.ts
+    TYPEORM_ENTITIES: ./src/modules/domain/**/*.entity.ts

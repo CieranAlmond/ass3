@@ -40,6 +40,14 @@
     production: yes
     state: present
 
+- name: "install typescript"
+  become: yes
+  npm:
+    name: typescript
+    global: yes
+    production: yes
+    state: present
+
 - name: " update dependencies"
   become: true
   shell: |
