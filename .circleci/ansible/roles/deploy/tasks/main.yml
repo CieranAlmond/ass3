@@ -1,43 +1,33 @@
-- name: Create app folder
-  become: yes
-  file:
-    path: /home/ubuntu/app
-    state: directory
 
-- name: "Copy backend build to server"
-  become: yes
-  unarchive:
-    src: /tmp/workspace/backend.tar.gz
-    dest: /home/ubuntu/app/
-    owner: ubuntu
+- name: "install dependencies."
+  become: true
+  apt:
+    name: ["nodejs", "npm"]
+    state: latest
+    update_cache: yes
 
-- name: "Copy package.json to server"
-  become: yes
+- name: "install pm2"
+  become: true
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
+- name: Copy backend dist files web server
   copy:
-    src: /tmp/workspace/package.json
-    dest: /home/ubuntu/app/
-    owner: ubuntu
+    src: /root/project/backend
+    dest: /home/ubuntu
 
-- name: "Testing env variable"
-  debug:
-    msg: "My env variable is: '{{ lookup('env', 'TYPEORM_ENTITIES') }}'"
-
-- name: "Install NPM dependencies"
-  shell:
-    cmd: npm install --production
-    chdir: /home/ubuntu/app
-
-- name: "Start backend with pm2"
-  become: yes
+- name: Install Node
   shell: |
-    export TYPEORM_HOST="{{ lookup('env', 'TYPEORM_HOST') }}"
-    export TYPEORM_ENTITIES="{{ lookup('env', 'TYPEORM_ENTITIES') }}"
-    export TYPEORM_USERNAME="{{ lookup('env', 'TYPEORM_USERNAME') }}"
-    export TYPEORM_PASSWORD="{{ lookup('env', 'TYPEORM_PASSWORD') }}"
-    export TYPEORM_DATABASE="{{ lookup('env', 'TYPEORM_DATABASE') }}"
-    cd /home/ubuntu/app
-    pm2 start main.js --name app
-- name: "Set pm2 start as service"
-  become: yes
+    cd /home/ubuntu/backend
+    npm install
+- name: Build Node
   shell: |
-    env PATH=$PATH:/usr/local/bin pm2 startup -u ubuntu
+    cd /home/ubuntu/backend
+    npm run build
+- name: Start PM2
+  shell: |
+    cd /home/ubuntu/backend
+    pm2 start npm --name backend -- start
