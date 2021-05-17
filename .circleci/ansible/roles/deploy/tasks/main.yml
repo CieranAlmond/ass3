@@ -63,15 +63,15 @@
     chdir: /home/ubuntu/backend
 
 
-environment:
-  ENVIRONMENT: production
-  NODE_ENV: production
-  TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
-  TYPEORM_MIGRATIONS_DIR: "{{ lookup('env','TYPEORM_MIGRATIONS_DIR') }}"
-  TYPEORM_MIGRATIONS: "{{ lookup('env','TYPEORM_MIGRATIONS') }}"
-  TYPEORM_ENTITIES: "{{ lookup('env','TYPEORM_ENTITIES') }}"
-  TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
-  TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
-  TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
-  TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
-  YPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}" 
+  environment:
+    ENVIRONMENT: production
+    NODE_ENV: production
+    TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
+    TYPEORM_MIGRATIONS_DIR: "{{ lookup('env','TYPEORM_MIGRATIONS_DIR') }}"
+    TYPEORM_MIGRATIONS: "{{ lookup('env','TYPEORM_MIGRATIONS') }}"
+    TYPEORM_ENTITIES: "{{ lookup('env','TYPEORM_ENTITIES') }}"
+    TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
+    TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
+    TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
+    TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
+    YPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}" 
