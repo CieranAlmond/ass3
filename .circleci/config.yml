@@ -212,8 +212,6 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - attach_workspace:
-          at: ~/
       - run:
           name: Run migrations
           command: |
@@ -231,44 +229,48 @@ jobs:
             ENVIRONMENT=$ENVIRONMENT" > .env
             cat .env
             npm install
-            touch migrations_log.txt
-            npm run migrations >> migrations_log.txt
-            cat migrations_log.txt
+            npm run migrations > migration_result.txt
+            cat migration_result.txt
       - run:
           name: Send migration results to memstash
           command: |
             cd backend
-            echo "CIRCLE_WORKFLOW_ID: ${CIRCLE_WORKFLOW_ID:0:7}"
-            if grep "has been executed successfully" backend/migrations_log.txt;
-            then curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7}; \
+            if grep -q "has been executed successfully"  migration_result.txt
+            then
+              echo "Migration success"
+              curl -H "Content-Type: text/plain" -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request PUT \
+              --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7} 
+            else
+              echo "Migration failure"
+              curl -H "Content-Type: text/plain" -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request PUT \
+              --data "1" https://api.memstash.io/values/migration_${4e47457d-c271-4422-960f-ff526f1f1ab8} 
             fi
+            echo "${CIRCLE_WORKFLOW_ID:0:7}"
   
   deploy-frontend:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: amazon/aws-cli
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: |
-            apk add curl
-            apk add --update npm
-            pip3 install awscli
+            curl -sL https://rpm.nodesource.com/setup_lts.x | bash -
+            yum -y install nodejs
+            yum -y install tar gzip
       - run:
-          name: Get backend url
+          name: Get backend url and deploy frontend objects
           command: |
-            # your code here
-            PUBLIC_IP=$(curl -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request GET https://api.memstash.io/values/instance_ip)
-            echo $PUBLIC_IP
-            export API_URL="http://$PUBLIC_IP:3030"
+            export BACKEND_IP=$(curl -H  "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request GET \
+            https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID:0:7})
+            export API_URL="http://${BACKEND_IP}:3030" >> "frontend/.env"
+            echo "${API_URL}"
+            cat frontend/.env
             cd frontend
             npm install
             npm run build
-      #adding so -aws s3 bucket command can build
-      - run:
-          name: Deploy frontend objects
-          command: |
-            aws s3 cp ./frontend/dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            aws s3 sync dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
       - destroy-environment:
           when: on_fail
       - revert-migrations:
@@ -292,8 +294,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add ansible
-            apk add curl
+            apk add --update tar gzip ansible nodejs npm
             pip install awscli
             aws --version
             ansible --version
@@ -301,18 +302,24 @@ jobs:
           name: Install Open SSH
           command: apk add openssh-client
       - run:
-          name: add IP to ansinle
+          name: create .env files
           command: |
-            INSTANCE_IP=$(curl -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request GET https://api.memstash.io/values/instance_ip)
-            echo ${INSTANCE_IP}
-            cd .circleci/ansible/
-            echo ${INSTANCE_IP} >> ./inventory.txt
-            cat ./inventory.txt
+            echo ENVIROMENT=production > "backend/.env"
+            echo NODE_ENV=production > "backend/.env"
+            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
       - run:
           name: Deploy backend
           command: |
-            cd .circleci/ansible/
-            cat inventory.txt
+            tar -C backend -czvf artifact.tar.gz .
+            cd .circleci/ansible
             ansible-playbook -i inventory.txt deploy-backend.yml
       - destroy-environment:
           when: on_fail 
@@ -364,40 +371,33 @@ jobs:
 
   cloudfront-update:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: amazon/aws-cli
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: |
-            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
-            apk add --update curl
+            yum -y install tar gzip
       - run:
           name: Update cloudfront distribution
           command: |
+            export OldWorkflowID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
+            echo OldWorkflowID: "$OldWorkflowID"
             
-            OldWorkflowId=$(aws cloudformation list-exports --query "Exports[?Name=='WorkflowID'].Value" --output text)
-            STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" --stack-status-filter CREATE_COMPLETE --output text)
-            echo OldWorkflowId: ${OldWorkflowId}
-            echo NewWorkflowId: ${CIRCLE_WORKFLOW_ID:0:7}
-            echo STACKS: ${STACKS}
-            echo Update CloudFront
-            
+            curl -H "Content-Type: text/plain" -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request PUT \
+              --data "$OldWorkflowID" https://api.memstash.io/values/id_${CIRCLE_WORKFLOW_ID:0:7}
+            export STACKS=$(aws cloudformation list-stacks \
+            --query "StackSummaries[*].StackName" \
+            --stack-status-filter CREATE_COMPLETE \
+            --no-paginate --output text)
+            echo STACKS: "$STACKS"
+            echo "Update cloudfront stack"
             aws cloudformation deploy \
+              --stack-name udapeople \
               --template-file .circleci/files/cloudfront.yml \
-              --stack-name udapeople-cloudfront-production \
+              --region ${AWS_DEFAULT_REGION} \
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
-              --tags project=udapeople
-            echo Delete old stacks
-            if [[ "$CurrentWorkflowID" != "$OldWorkflowID" ]]
-            then
-              # Delete files from bucket
-              aws s3 rm s3://udapeople-${OldWorkflowId}/ --recursive
-              # Delete front end stack
-              aws cloudformation delete-stack --stack-name udacity-frontend-${OldWorkflowId}
-              # Delete back end stack
-              aws cloudformation delete-stack --stack-name udacity-backend-${OldWorkflowId}
-            fi
+              --tags project=udapeople-cloudfront
       # Here's where you will add some code to rollback on failure  
       - revert-migrations:
           when: on_fail  
