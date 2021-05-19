@@ -137,37 +137,50 @@ jobs:
     docker:
       - image: amazon/aws-cli
     steps:
-      - checkout
-      - run: yum -y install tar gzip 
+      - checkout 
+      - run: yum -y install tar gzip
       - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
-              --template-file .circleci/files/backend.yml \
-              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --template-file ./.circleci/files/backend.yml \
               --tags project=udapeople \
+              --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" 
+            URLS=$(aws ec2 describe-instances --region us-west-2 --query "Reservations[*].Instances[*].PublicIpAddress" \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
+            echo "URLS=$URLS"
+            echo "${CIRCLE_WORKFLOW_ID:0:7}"
+            curl -H "Content-Type: text/plain" -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request PUT \
+              --data "$URLS" https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
-              --template-file .circleci/files/frontend.yml \
-              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --template-file ./.circleci/files/frontend.yml \
               --tags project=udapeople \
+              --stack-name "frontend-${CIRCLE_WORKFLOW_ID:0:7}"  \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
+            ARN=$(aws s3 ls | grep udapeople)
+            echo "ARN=$ARN"
+            curl -H "Content-Type: text/plain" -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request PUT \
+              --data "$ARN" https://api.memstash.io/values/arn_${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            INSTANCE_IP=$(aws ec2 describe-instances \
-            --filters 'Name=tag:Name,Values=backend-*' \
-            --query "Reservations[*].Instances[*].PublicIpAddress" \
-            --output text)
-            echo ${INSTANCE_IP}
-            curl -H "Content-Type: text/plain" \
-               -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" \
-               --request PUT \
-               --data ${INSTANCE_IP} \
-               https://api.memstash.io/values/instance_ip
+            echo "[web]" >> ./.circleci/ansible/inventory.txt
+            backend_ip=$(curl -H  "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request GET \
+            https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID:0:7})
+            echo "$backend_ip" >> ./.circleci/ansible/inventory.txt
+            cat ./.circleci/ansible/inventory.txt
+      - run:
+          name: Resolve dependencies
+          command: |
+            yum -y install tar gzip jq npm 
+      - persist_to_workspace:
+          root: /root
+          paths:
+            - project
       - destroy-environment:
           when: on_fail
       #- destroy-environment
@@ -197,11 +210,7 @@ jobs:
       - run:
           name: Configure server
           command: |
-            INSTANCE_IP=$(curl -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request GET https://api.memstash.io/values/instance_ip)
-            echo ${INSTANCE_IP}
-            cd .circleci/ansible/
-            ls
-            echo ${INSTANCE_IP} >> ./inventory.txt
+            cd .circleci/ansible
             cat ./inventory.txt
             export ANSIBLE_HOST_KEY_CHECKING=False
             ansible-playbook -i ./inventory.txt configure-server.yml
@@ -243,7 +252,7 @@ jobs:
             else
               echo "Migration failure"
               curl -H "Content-Type: text/plain" -H "token: 4e47457d-c271-4422-960f-ff526f1f1ab8" --request PUT \
-              --data "1" https://api.memstash.io/values/migration_${4e47457d-c271-4422-960f-ff526f1f1ab8} 
+              --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID:0:7} 
             fi
             echo "${CIRCLE_WORKFLOW_ID:0:7}"
   
