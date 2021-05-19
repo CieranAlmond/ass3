@@ -1,45 +1,32 @@
-- name: "task to update the packages"
-  become: true
-  apt:
-    upgrade: "yes"
+---
 
-- name: "remove dependencies that are no longer required"
-  become: true
+- name: "update apt packages."
+  become: yes
   apt:
-    autoremove: yes
+    update_cache: yes
 
-- name: "install node packages"
-  become: true
+
+- name: "install dependencies."
+  become: yes
   apt:
     name: ["nodejs", "npm"]
     state: latest
     update_cache: yes
 
-- name: "Install zip utility."
-  become: true
-  apt:
-    name: [ "zip", "unzip" ]
-    state: latest
-    update_cache: yes
-
-- name: "install nodejs 13.8.0"
-  become: true
-  shell: n 13.8.0
-
-- name: "install pm2 package"
-  become: true
+- name: "install pm2"
+  become: yes
   npm:
     name: pm2
     global: yes
     production: yes
     state: present
-
+    
   environment:
     ENVIRONMENT: production
     NODE_ENV: production
     TYPEORM_CONNECTION: "{{ lookup('env','TYPEORM_CONNECTION') }}"
     TYPEORM_HOST: "{{ lookup('env','TYPEORM_HOST') }}"
-    TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
+    TYPEORM_PORT: 5432
     TYPEORM_USERNAME: "{{ lookup('env','TYPEORM_USERNAME') }}"
     TYPEORM_PASSWORD: "{{ lookup('env','TYPEORM_PASSWORD') }}"
     TYPEORM_DATABASE: "{{ lookup('env','TYPEORM_DATABASE') }}"
