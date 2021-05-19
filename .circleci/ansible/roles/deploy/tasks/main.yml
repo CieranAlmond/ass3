@@ -1,3 +1,5 @@
+---
+
 - name: "Update apt packages"
   become: true
   apt:
@@ -13,17 +15,17 @@
   apt:
     name: ["nodejs", "npm"]
     update_cache: "yes"
-
-- name: Create directory
+    
+- name: Creates directory
   file:
     path: /home/ubuntu/backend
     state: directory
-
-- name: Transfer backend files to server
+   
+- name: Transfer backend files to cloud server
   copy:
     src: /root/project/backend
-    dest: /home/ubuntu/
-
+    dest: /home/ubuntu
+    
 - name: make sure the latest npm is installed
   become: true
   command: npm install -g n
@@ -55,21 +57,19 @@
     apt-get install -y nodejs  
     npm install -g n
     npm install
-    
 - name: "build package"
   become: true
-  shell: |
-    cd /home/ubuntu/backend
-    npm run build
-    sudo cat .env
-    sudo npm run prestart:prod
+  command: npm run build
+  args:
+    chdir: /home/ubuntu/backend
     
-- name: Executing node
+- name: "Executing node"
   become: true
-  shell: |
-    cd /home/ubuntu/backend
-    pm2 start npm --name backend -- start
-    pm2 ls
+  command: 
+    pm2 start npm --name backend -- run start
+  args:
+    chdir: /home/ubuntu/backend
+
 
   environment:
     ENVIRONMENT: production
