@@ -235,8 +235,8 @@ jobs:
             TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS \n
             TYPEORM_ENTITIES=$TYPEORM_ENTITIES \n
             NODE_ENV=production \n
-            ENVIRONMENT=$ENVIRONMENT" > .env
-            cat .env
+            ENVIRONMENT=$ENVIRONMENT" > ./backend/.env
+            cat ./backend/.env
             npm install
             npm run migrations > migration_result.txt
             cat migration_result.txt
